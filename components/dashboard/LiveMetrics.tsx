@@ -1,26 +1,31 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, AlertTriangle, CheckCircle, Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { sampleMetrics } from '@/lib/sample-data'
 
 export function LiveMetrics() {
-  const [metrics, setMetrics] = useState({
-    scannedToday: 0,
-    misinfoDetected: 0,
-    activeAlerts: 0,
-    verificationRate: 0
-  })
-  
-  let supabase: ReturnType<typeof createClient> | undefined
-  try {
-    supabase = createClient()
-  } catch (error) {
-    // Supabase not configured
-    supabase = undefined
-  }
+  const supabase = useMemo(() => {
+    try {
+      return createClient()
+    } catch (error) {
+      return undefined
+    }
+  }, [])
+  const isSampleMode = !supabase
+  const [metrics, setMetrics] = useState(() =>
+    isSampleMode
+      ? sampleMetrics
+      : {
+          scannedToday: 0,
+          misinfoDetected: 0,
+          activeAlerts: 0,
+          verificationRate: 0,
+        }
+  )
   
   useEffect(() => {
     if (!supabase) return
@@ -37,10 +42,10 @@ export function LiveMetrics() {
       .subscribe()
     
     return () => {
-      supabase?.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [supabase])
   
   async function loadMetrics() {
     if (!supabase) return
@@ -69,7 +74,7 @@ export function LiveMetrics() {
       scannedToday: scanned || 0,
       misinfoDetected: misinfo || 0,
       activeAlerts: alerts || 0,
-      verificationRate: scanned ? ((scanned - (misinfo || 0)) / scanned * 100) : 0
+      verificationRate: scanned ? ((scanned - (misinfo || 0)) / scanned * 100) : 0,
     })
   }
   
@@ -113,17 +118,17 @@ export function LiveMetrics() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.1 }}
         >
-          <Card>
+          <Card className="hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {metric.title}
               </CardTitle>
-              <div className={`${metric.bgColor} p-2 rounded-lg`}>
+              <div className={`${metric.bgColor} p-2 rounded-lg animate-pulse`}>
                 <metric.icon className={`h-4 w-4 ${metric.color}`} />
               </div>
             </CardHeader>
             <CardContent>
-              <div className={`text-3xl font-bold ${metric.color}`}>
+              <div className={`text-3xl font-bold tracking-tight ${metric.color}`}>
                 {metric.value}
               </div>
             </CardContent>

@@ -21,6 +21,10 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Optional: Google Fact Check API
 GOOGLE_FACTCHECK_API_KEY=your_google_factcheck_key
+
+# Social Media APIs
+TWITTER_BEARER_TOKEN=your_twitter_bearer_token
+YOUTUBE_API_KEY=AIzaSyBrQTNs0AUFTH5eGP93m41cHjNfDXA5yWA
 ```
 
 ## Getting API Keys

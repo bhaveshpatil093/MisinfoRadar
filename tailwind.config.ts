@@ -52,9 +52,18 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        success: "#10b981",
-        warning: "#f59e0b",
-        danger: "#ef4444",
+        success: {
+          DEFAULT: "#10b981",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "#f59e0b",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        danger: {
+          DEFAULT: "#ef4444",
+          foreground: "hsl(var(--danger-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

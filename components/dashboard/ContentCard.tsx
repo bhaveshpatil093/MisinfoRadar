@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,17 +9,20 @@ import { ExternalLink } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion } from 'framer-motion'
 import type { ContentItem } from '@/lib/supabase/types'
+import { sampleContentItems } from '@/lib/sample-data'
 
 export function ContentCard() {
-  const [contentItems, setContentItems] = useState<ContentItem[]>([])
-  
-  let supabase: ReturnType<typeof createClient> | undefined
-  try {
-    supabase = createClient()
-  } catch (error) {
-    // Supabase not configured
-    supabase = undefined
-  }
+  const supabase = useMemo(() => {
+    try {
+      return createClient()
+    } catch (error) {
+      return undefined
+    }
+  }, [])
+  const isSampleMode = !supabase
+  const [contentItems, setContentItems] = useState<ContentItem[]>(() =>
+    isSampleMode ? (sampleContentItems as unknown as ContentItem[]) : []
+  )
   
   useEffect(() => {
     if (!supabase) return
@@ -36,10 +39,10 @@ export function ContentCard() {
       .subscribe()
     
     return () => {
-      supabase?.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // eslint-disable-next-line react-hooks-exhaustive-deps
+  }, [supabase])
   
   async function loadContent() {
     if (!supabase) return
@@ -90,7 +93,7 @@ export function ContentCard() {
                   key={item.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+                  className="p-4 rounded-lg border bg-card hover:bg-accent/50 hover:shadow-md transition-all duration-300"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -147,4 +150,3 @@ export function ContentCard() {
     </Card>
   )
 }
-

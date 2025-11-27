@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -9,6 +9,7 @@ import { AlertTriangle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion } from 'framer-motion'
 import type { Alert } from '@/lib/supabase/types'
+import { sampleAlerts } from '@/lib/sample-data'
 
 const severityColors = {
   low: 'bg-yellow-100 text-yellow-700 border-yellow-300',
@@ -18,15 +19,17 @@ const severityColors = {
 }
 
 export function AlertCard() {
-  const [alerts, setAlerts] = useState<Alert[]>([])
-  
-  let supabase: ReturnType<typeof createClient> | undefined
-  try {
-    supabase = createClient()
-  } catch (error) {
-    // Supabase not configured
-    supabase = undefined
-  }
+  const supabase = useMemo(() => {
+    try {
+      return createClient()
+    } catch (error) {
+      return undefined
+    }
+  }, [])
+  const isSampleMode = !supabase
+  const [alerts, setAlerts] = useState<Alert[]>(() =>
+    isSampleMode ? (sampleAlerts as Alert[]) : []
+  )
   
   useEffect(() => {
     if (!supabase) return
@@ -43,10 +46,10 @@ export function AlertCard() {
       .subscribe()
     
     return () => {
-      supabase?.removeChannel(channel)
+      supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [supabase])
   
   async function loadAlerts() {
     if (!supabase) return
@@ -81,7 +84,7 @@ export function AlertCard() {
                   key={alert.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`p-4 rounded-lg border ${severityColors[alert.severity]}`}
+                  className={`p-4 rounded-lg border ${severityColors[alert.severity]} hover:shadow-lg transition-shadow duration-300`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <Badge variant="outline" className="capitalize">

@@ -48,6 +48,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+> **No Supabase yet?**  
+> The dashboard automatically falls back to a Maharashtra-focused sample dataset (Mumbai, Pune, Nagpur, Kolhapur, Satara, Thane) so you can demo the UI before wiring up real data. Once your Supabase credentials are in place, the live feeds will replace the sample stories.
+
 ### 5. Test the System
 
 1. **Test RSS Fetching:**

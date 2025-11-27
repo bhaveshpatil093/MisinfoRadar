@@ -211,12 +211,29 @@ CREATE TRIGGER update_alerts_updated_at BEFORE UPDATE ON alerts FOR EACH ROW EXE
 
 -- Seed Data: Insert election-focused news sources
 INSERT INTO rss_sources (name, url, category, credibility_score) VALUES
+-- Indian News Channels
+('NDTV', 'https://www.ndtv.com/rss', 'mainstream_media', 0.78),
+('Aaj Tak', 'https://www.tak.live/rss', 'mainstream_media', 0.75),
+('ABP News', 'https://www.abplive.com/rss', 'mainstream_media', 0.77),
+('ABP News Election', 'https://www.abplive.com/elections/feed', 'election_news', 0.77),
+('Zee News', 'https://zeenews.india.com/rss/india-national-news.xml', 'mainstream_media', 0.76),
+('Republic TV', 'https://www.republicworld.com/rss', 'mainstream_media', 0.74),
+('Republic TV Politics', 'https://www.republicworld.com/rss/politics.xml', 'election_news', 0.74),
+('Republic TV Elections', 'https://www.republicworld.com/rss/elections.xml', 'election_news', 0.74),
+('Times of India', 'https://timesofindia.indiatimes.com/rss.cms', 'mainstream_media', 0.82),
+('India TV', 'https://www.indiatvnews.com/rssfeed', 'mainstream_media', 0.75),
+('India TV Politics', 'https://www.indiatvnews.com/rssnews/topstory-politics.xml', 'election_news', 0.75),
+('DD News', 'https://ddnewsportal.com/rss-feeds', 'mainstream_media', 0.80),
+('DD News Political', 'https://ddnewsportal.com/rss/category/Political', 'election_news', 0.80),
+('Hindustan Times', 'https://www.hindustantimes.com/rss', 'mainstream_media', 0.83),
+('HT India News', 'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml', 'mainstream_media', 0.83),
+-- International
+('CNN Politics', 'http://rss.cnn.com/rss/cnn_allpolitics.rss', 'mainstream_media', 0.88),
 ('BBC Politics', 'http://feeds.bbci.co.uk/news/politics/rss.xml', 'mainstream_media', 0.90),
 ('Reuters Politics', 'https://www.reutersagency.com/feed/?taxonomy=best-topics&post_type=best', 'mainstream_media', 0.92),
 ('The Hindu Politics', 'https://www.thehindu.com/news/national/feeder/default.rss', 'mainstream_media', 0.85),
-('India Today Elections', 'https://www.indiatoday.in/rss/1206543', 'mainstream_media', 0.80),
-('NDTV Elections', 'https://feeds.feedburner.com/ndtvnews-india-news', 'mainstream_media', 0.78),
 ('The Wire Politics', 'https://thewire.in/politics/feed', 'mainstream_media', 0.82),
+-- Fact Checkers
 ('Alt News', 'https://www.altnews.in/feed/', 'fact_checkers', 0.95),
 ('Boom Live', 'https://www.boomlive.in/feed', 'fact_checkers', 0.93),
 ('FactCheck.org', 'https://www.factcheck.org/feed/', 'fact_checkers', 0.94),

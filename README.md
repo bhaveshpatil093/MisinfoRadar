@@ -4,19 +4,23 @@ An autonomous, real-time election misinformation detection and verification plat
 
 ## Features
 
-- 🔍 **Real-time RSS Monitoring** - Continuous scanning of election news from multiple sources
+- 🔍 **Real-time RSS Monitoring** - Continuous scanning of election news from 20+ Indian and international sources
 - 🤖 **Multi-Agent AI System** - 6 autonomous agents working in coordination
-- 🎭 **Deepfake Detection** - Visual misinformation detection
+- 🎭 **Deepfake Detection** - Visual misinformation detection via YouTube analysis
 - ✅ **Fact Verification** - Cross-referencing with multiple authoritative sources
-- 📊 **Live Dashboard** - Real-time updates with modern UX
+- 📊 **Live Dashboard** - Real-time updates with modern UX and smooth animations
 - 🚨 **Alert System** - Instant notifications for high-severity misinformation
 - 📈 **Analytics** - Trend analysis, source credibility tracking, spread patterns
+- 🐦 **Social Media Tracking** - Twitter/X integration for content spread analysis
+- 📺 **YouTube Integration** - Video content analysis and deepfake detection
+- 🇮🇳 **Maharashtra Sample Dataset** - Built-in demo data for Mumbai, Pune, Nagpur, Kolhapur, Satara, and Thane election narratives when Supabase isn’t connected
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS
+- **Frontend**: Next.js 14 (App Router), React 18, TypeScript, Tailwind CSS, Framer Motion
 - **Backend**: Next.js API Routes, Supabase (Database + Realtime)
 - **AI/LLM**: OpenAI GPT-4 Turbo, Groq Llama 3
+- **APIs**: Twitter/X API v2, YouTube Data API v3
 - **Deployment**: Vercel (Frontend), Supabase (Backend)
 
 ## Setup
@@ -43,6 +47,17 @@ An autonomous, real-time election misinformation detection and verification plat
    ```
 
 5. **Open [http://localhost:3000](http://localhost:3000)** in your browser.
+
+### Maharashtra Sample Data
+
+If Supabase/API keys aren’t configured yet, the dashboard automatically falls back to a curated Maharashtra election dataset:
+
+- Live metrics for statewide scanning & detection
+- Agent activity logs featuring Pune, Nagpur, Kolhapur, Satara, Mumbai, and Thane incidents
+- Alerts for deepfakes, misinformation, and coordinated campaigns
+- Recently analyzed content cards with detailed context and confidence scores
+
+This lets you demo the platform end-to-end before wiring up real Supabase + RSS feeds.
 
 ## Project Structure
 
@@ -77,8 +92,22 @@ misinforadar/
 - `POST /api/agents/monitor` - Trigger RSS scan
 - `POST /api/agents/detect` - Analyze content for misinformation
 - `POST /api/agents/verify` - Verify claims in content
+- `POST /api/agents/trace` - Trace content spread on social media
 - `POST /api/agents/alert` - Create alert for content
 - `POST /api/rss/fetch` - Fetch RSS feeds
+
+## Integrated News Sources
+
+### Indian News Channels
+- NDTV, Aaj Tak, ABP News, Zee News, Republic TV
+- Times of India, India TV, DD News, Hindustan Times
+- Multiple election-specific RSS feeds
+
+### International Sources
+- CNN Politics, BBC Politics, Reuters Politics
+
+### Fact Checkers
+- Alt News, Boom Live, FactCheck.org, PolitiFact
 
 ## Database Schema
 

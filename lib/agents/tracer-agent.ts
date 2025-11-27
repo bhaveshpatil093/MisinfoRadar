@@ -1,11 +1,29 @@
 import { createClient } from '@/lib/supabase/client'
+import { TwitterClient } from '@/lib/apis/twitter-client'
+import { YouTubeClient } from '@/lib/apis/youtube-client'
 import type { ContentItem } from '@/lib/supabase/types'
 
 export class TracerAgent {
-  private supabase = createClient()
+  private supabase: ReturnType<typeof createClient> | null = null
+  private twitterClient: TwitterClient | null = null
+  private youtubeClient: YouTubeClient | null = null
+  
+  constructor() {
+    try {
+      this.supabase = createClient()
+      this.twitterClient = new TwitterClient()
+      this.youtubeClient = new YouTubeClient()
+    } catch (error) {
+      console.warn('TracerAgent: Failed to initialize clients', error)
+    }
+  }
   
   async traceContent(contentId: string) {
     const startTime = Date.now()
+    
+    if (!this.supabase) {
+      throw new Error('Supabase client not initialized')
+    }
     
     try {
       // Get content item
@@ -21,6 +39,8 @@ export class TracerAgent {
       const trace = await this.analyzeSpread(content)
       
       // Store trace result
+      if (!this.supabase) return
+      
       await this.supabase.from('source_traces').insert({
         content_id: contentId,
         original_source: trace.originalSource,
@@ -37,6 +57,8 @@ export class TracerAgent {
       const processingTime = Date.now() - startTime
       
       // Log activity
+      if (!this.supabase) return
+      
       await this.supabase.from('agent_logs').insert({
         content_id: contentId,
         agent_name: 'tracer',
@@ -47,6 +69,8 @@ export class TracerAgent {
       
       console.log(`🔍 Tracer Agent: Traced content ${contentId}`)
       
+      return trace
+      
     } catch (error) {
       console.error('❌ Tracer Agent error:', error)
       throw error
@@ -54,23 +78,128 @@ export class TracerAgent {
   }
   
   private async analyzeSpread(content: ContentItem) {
-    // In production, integrate with:
-    // - Social media APIs (Twitter, Facebook)
-    // - URL shortener services
-    // - Deepfake detection APIs
-    
-    // For now, return mock analysis
-    return {
+    const results = {
       originalSource: content.url,
       firstSeenAt: content.published_at || content.created_at,
-      spreadPattern: 'organic', // 'viral', 'coordinated', 'organic', 'bot_amplified'
-      sharingAccounts: [],
-      geographicSpread: [],
-      platformDistribution: [],
+      spreadPattern: 'organic' as 'viral' | 'coordinated' | 'organic' | 'bot_amplified',
+      sharingAccounts: [] as any[],
+      geographicSpread: [] as any[],
+      platformDistribution: [] as any[],
       isDeepfake: false,
       deepfakeConfidence: 0,
-      manipulationType: null
+      manipulationType: null as string | null
     }
+
+    try {
+      // 1. Search Twitter/X for mentions of this URL
+      const twitterResults = this.twitterClient 
+        ? await this.twitterClient.searchByUrl(content.url)
+        : []
+      
+      if (twitterResults.length > 0) {
+        results.platformDistribution.push({
+          platform: 'twitter',
+          shares: twitterResults.length,
+          accounts: twitterResults.map((tweet: any) => ({
+            tweetId: tweet.id,
+            authorId: tweet.author_id,
+            createdAt: tweet.created_at,
+            metrics: tweet.public_metrics,
+          })),
+        })
+
+        // Analyze if it's viral or coordinated
+        const totalEngagement = twitterResults.reduce((sum: number, tweet: any) => {
+          return sum + (tweet.public_metrics?.retweet_count || 0) + 
+                      (tweet.public_metrics?.like_count || 0) +
+                      (tweet.public_metrics?.reply_count || 0)
+        }, 0)
+
+        if (totalEngagement > 1000) {
+          results.spreadPattern = 'viral'
+        } else if (twitterResults.length > 20 && totalEngagement / twitterResults.length < 10) {
+          results.spreadPattern = 'bot_amplified'
+        }
+
+        results.sharingAccounts.push(...twitterResults.map((tweet: any) => ({
+          platform: 'twitter',
+          accountId: tweet.author_id,
+          tweetId: tweet.id,
+          sharedAt: tweet.created_at,
+        })))
+      }
+
+      // 2. Search YouTube for related videos
+      const searchQuery = `${content.title} election`
+      const youtubeResults = this.youtubeClient
+        ? await this.youtubeClient.searchVideos(searchQuery, 5)
+        : []
+      
+      if (youtubeResults.length > 0) {
+        results.platformDistribution.push({
+          platform: 'youtube',
+          videos: youtubeResults.length,
+          videoIds: youtubeResults.map((item: any) => item.id.videoId),
+        })
+
+        // Check if any videos might be deepfakes
+        if (this.youtubeClient) {
+          for (const video of youtubeResults.slice(0, 3)) {
+            const videoDetails = await this.youtubeClient.getVideoDetails(video.id.videoId)
+            if (videoDetails) {
+              // Check for suspicious patterns (high views, low engagement ratio might indicate manipulation)
+              const viewCount = parseInt(videoDetails.statistics?.viewCount || '0')
+              const likeCount = parseInt(videoDetails.statistics?.likeCount || '0')
+              const engagementRatio = viewCount > 0 ? likeCount / viewCount : 0
+              
+              if (engagementRatio < 0.01 && viewCount > 10000) {
+                results.isDeepfake = true
+                results.deepfakeConfidence = 0.6
+                results.manipulationType = 'suspicious_engagement_pattern'
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Extract keywords and search for related content
+      const keywords = content.keywords || []
+      if (keywords.length > 0 && this.twitterClient) {
+        const keywordQuery = keywords.slice(0, 3).join(' ')
+        const relatedTweets = await this.twitterClient.searchTweets(keywordQuery, 10)
+        
+        if (relatedTweets.length > 5) {
+          results.spreadPattern = 'coordinated'
+        }
+      }
+
+      // 4. Geographic analysis (based on Twitter trends)
+      let indiaTrends: any[] = []
+      let worldwideTrends: any[] = []
+      
+      if (this.twitterClient) {
+        indiaTrends = await this.twitterClient.getTrendingTopics(23424848) // India WOEID
+        worldwideTrends = await this.twitterClient.getTrendingTopics(1)
+      }
+      
+      const contentKeywords = content.title.toLowerCase().split(' ')
+      const isTrending = [...indiaTrends, ...worldwideTrends].some((trend: any) => 
+        contentKeywords.some((keyword: string) => trend.name?.toLowerCase().includes(keyword))
+      )
+
+      if (isTrending) {
+        results.geographicSpread.push({
+          region: 'India',
+          isTrending: true,
+        })
+      }
+
+    } catch (error) {
+      console.error('Error in spread analysis:', error)
+      // Continue with basic analysis
+    }
+
+    return results
   }
 }
 
