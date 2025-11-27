@@ -5,6 +5,8 @@ import { AlertCard } from '@/components/dashboard/AlertCard'
 import { ContentCard } from '@/components/dashboard/ContentCard'
 import { LaunchAgentsButton } from '@/components/dashboard/LaunchAgentsButton'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { ElectionTicker } from '@/components/dashboard/ElectionTicker'
 import { Activity, MapPin, Satellite } from 'lucide-react'
 
 export default function DashboardPage() {
@@ -72,6 +74,9 @@ export default function DashboardPage() {
             <p className="text-sm uppercase tracking-[0.35em] text-blue-200">
               Maharashtra Command Center
             </p>
+            <Badge className="border-white/10 bg-white/10 text-xs text-slate-200">
+              Lok Sabha 2025 · Phase III
+            </Badge>
             <h1 className="text-4xl font-semibold tracking-tight text-white lg:text-5xl">
               Real-time election misinformation radar for Mumbai & beyond.
             </h1>
@@ -112,6 +117,8 @@ export default function DashboardPage() {
         </div>
       </div>
       
+      <ElectionTicker />
+
       {/* Live Metrics + Spotlight */}
       <div className="space-y-6">
         <LiveMetrics />

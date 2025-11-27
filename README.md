@@ -15,6 +15,7 @@ An autonomous, real-time election misinformation detection and verification plat
 - 📺 **YouTube Integration** - Video content analysis and deepfake detection
 - 🇮🇳 **Maharashtra Sample Dataset** - Built-in demo data for Mumbai, Pune, Nagpur, Kolhapur, Satara, and Thane election narratives when Supabase isn’t connected
 - 📰 **RSS Deepfake Scanner** - Pulls from ABP Live, Zee News, Republic World, India TV, CNN, DD News, and Hindustan Times with heuristics to flag suspected deepfakes
+- 🗳️ **Election-first UI** - Live ticker, regional watchlists, and Lok Sabha-focused dashboards baked into every page
 
 ## Tech Stack
 

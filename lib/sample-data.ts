@@ -170,3 +170,34 @@ export const sampleContentItems = [
   },
 ]
 
+export const electionTickerItems = [
+  {
+    headline: 'Shivajinagar booths report 71% turnout in mock poll',
+    source: 'ECI Control Room',
+    state: 'Maharashtra',
+    alliance: 'MVA vs NDA',
+    time: '2m ago',
+  },
+  {
+    headline: 'Bandra West: fake SMS claims poll date shifted',
+    source: 'Maha Cyber Cell',
+    state: 'Mumbai',
+    alliance: 'Independent ops',
+    time: '5m ago',
+  },
+  {
+    headline: 'Pune Cantonment workers intercept “FREE LPG” rumour vans',
+    source: 'Field Ops',
+    state: 'Pune',
+    alliance: 'NDA',
+    time: '7m ago',
+  },
+  {
+    headline: 'Nagpur North sees 300 new bot handles push eviction scare',
+    source: 'Social Radar',
+    state: 'Nagpur',
+    alliance: 'Third Front',
+    time: '9m ago',
+  },
+]
+
