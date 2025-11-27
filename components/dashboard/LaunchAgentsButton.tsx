@@ -30,22 +30,29 @@ export function LaunchAgentsButton() {
 
   return (
     <Button
-      onClick={triggerAgents}
-      disabled={isLaunching}
-      className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-blue-500/30 hover:opacity-90"
-    >
-      {isLaunching ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Launching…
-        </>
-      ) : (
-        <>
-          <ShieldCheck className="mr-2 h-4 w-4" />
-          Launch Agents
-        </>
-      )}
-    </Button>
+    onClick={triggerAgents}
+    disabled={isLaunching}
+    className={`
+      flex items-center gap-2 px-4 py-2
+      bg-blue-600 text-white
+      rounded-md transition-all duration-200
+      hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed
+      shadow-sm hover:shadow 
+    `}
+  >
+    {isLaunching ? (
+      <>
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Launching...
+      </>
+    ) : (
+      <>
+        <ShieldCheck className="h-4 w-4" />
+        Launch Agents
+      </>
+    )}
+  </Button>
+  
   )
 }
 
