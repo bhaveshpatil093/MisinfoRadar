@@ -1,9 +1,11 @@
+import Link from 'next/link'
 import { LiveMetrics } from '@/components/dashboard/LiveMetrics'
 import { AgentActivityFeed } from '@/components/dashboard/AgentActivityFeed'
 import { AlertCard } from '@/components/dashboard/AlertCard'
 import { ContentCard } from '@/components/dashboard/ContentCard'
+import { LaunchAgentsButton } from '@/components/dashboard/LaunchAgentsButton'
 import { Button } from '@/components/ui/button'
-import { Activity, MapPin, Satellite, ShieldCheck } from 'lucide-react'
+import { Activity, MapPin, Satellite } from 'lucide-react'
 
 export default function DashboardPage() {
   const spotlight = [
@@ -78,13 +80,12 @@ export default function DashboardPage() {
               and launch counter-messaging across the state within minutes.
             </p>
             <div className="flex flex-wrap gap-3">
-              <Button className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white shadow-lg shadow-blue-500/30 hover:opacity-90">
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Engage Defense Stack
-              </Button>
-              <Button variant="ghost">
-                <Activity className="mr-2 h-4 w-4" />
-                Watch Live Flow
+              <LaunchAgentsButton />
+              <Button variant="ghost" asChild>
+                <Link href="/live" className="flex items-center">
+                  <Activity className="mr-2 h-4 w-4" />
+                  Watch Live Flow
+                </Link>
               </Button>
             </div>
           </div>

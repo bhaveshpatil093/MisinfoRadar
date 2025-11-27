@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Activity, Radio, Wifi } from 'lucide-react'
+import { Activity, Radio, Wifi, Clock3 } from 'lucide-react'
 
 export default function LivePage() {
   const streams = [
@@ -65,8 +65,8 @@ export default function LivePage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="glass-panel border-white/10 bg-white/5">
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="glass-panel border-white/10 bg-white/5 lg:col-span-2">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <Activity className="h-4 w-4 text-blue-400" />
@@ -127,6 +127,32 @@ export default function LivePage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="glass-panel border-white/10 bg-white/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Clock3 className="h-4 w-4 text-emerald-300" />
+            Last 15-Minute Timeline
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-3 text-sm text-slate-200">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">00:03 ago</p>
+            <p className="mt-2 text-white">Detector flagged deepfake audio clip (Satara).</p>
+            <p className="text-xs text-slate-400">Confidence 0.82 · escalated to Verifier</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">00:06 ago</p>
+            <p className="mt-2 text-white">Tracer mapped bot cluster boosting #PuneResults.</p>
+            <p className="text-xs text-slate-400">62 suspect accounts</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">00:11 ago</p>
+            <p className="mt-2 text-white">Counter Agent shipped WhatsApp correction for Kolhapur.</p>
+            <p className="text-xs text-slate-400">Reach 180k · Engagement 27%</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -1,5 +1,38 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  CartesianGrid,
+  Legend,
+} from 'recharts'
+
+const detectionLatency = [
+  { day: 'Mon', latency: 4.1, target: 5 },
+  { day: 'Tue', latency: 3.8, target: 5 },
+  { day: 'Wed', latency: 3.2, target: 5 },
+  { day: 'Thu', latency: 2.9, target: 5 },
+  { day: 'Fri', latency: 3.4, target: 5 },
+  { day: 'Sat', latency: 3.1, target: 5 },
+  { day: 'Sun', latency: 2.7, target: 5 },
+]
+
+const narrativeSpread = [
+  { label: 'Mumbai', organic: 32, bot: 14, deepfake: 6 },
+  { label: 'Pune', organic: 28, bot: 12, deepfake: 3 },
+  { label: 'Nagpur', organic: 21, bot: 18, deepfake: 7 },
+  { label: 'Kolhapur', organic: 18, bot: 9, deepfake: 5 },
+]
 
 export default function AnalyticsPage() {
   const metrics = [
@@ -22,7 +55,7 @@ export default function AnalyticsPage() {
   ]
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-10">
       <div className="glass-panel border-white/10 p-8">
         <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Analytics</p>
         <h1 className="mt-3 text-3xl font-semibold text-white">Signal & Response Analytics</h1>
@@ -46,6 +79,47 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="glass-panel border-white/10 bg-white/5">
+          <CardHeader>
+            <CardTitle className="text-white">Detection Latency (mins)</CardTitle>
+          </CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={detectionLatency}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="day" stroke="#94a3b8" />
+                <YAxis stroke="#94a3b8" />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="latency" stroke="#60a5fa" strokeWidth={3} dot />
+                <Line type="monotone" dataKey="target" stroke="#f97316" strokeDasharray="4 4" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <Card className="glass-panel border-white/10 bg-white/5">
+          <CardHeader>
+            <CardTitle className="text-white">Narrative Spread Mix</CardTitle>
+          </CardHeader>
+          <CardContent className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={narrativeSpread}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                <XAxis dataKey="label" stroke="#94a3b8" />
+                <YAxis stroke="#94a3b8" />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="organic" stackId="a" fill="#22c55e" />
+                <Bar dataKey="bot" stackId="a" fill="#f97316" />
+                <Bar dataKey="deepfake" stackId="a" fill="#ef4444" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="glass-panel border-white/10 bg-white/5">

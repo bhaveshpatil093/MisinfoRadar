@@ -14,6 +14,7 @@ An autonomous, real-time election misinformation detection and verification plat
 - 🐦 **Social Media Tracking** - Twitter/X integration for content spread analysis
 - 📺 **YouTube Integration** - Video content analysis and deepfake detection
 - 🇮🇳 **Maharashtra Sample Dataset** - Built-in demo data for Mumbai, Pune, Nagpur, Kolhapur, Satara, and Thane election narratives when Supabase isn’t connected
+- 📰 **RSS Deepfake Scanner** - Pulls from ABP Live, Zee News, Republic World, India TV, CNN, DD News, and Hindustan Times with heuristics to flag suspected deepfakes
 
 ## Tech Stack
 
@@ -94,6 +95,8 @@ misinforadar/
 - `POST /api/agents/verify` - Verify claims in content
 - `POST /api/agents/trace` - Trace content spread on social media
 - `POST /api/agents/alert` - Create alert for content
+- `GET /api/analysis/feed` - Fetch scored RSS items from curated election sources
+- `POST /api/analysis/manual` - Submit arbitrary text/URL content for realism scoring
 - `POST /api/rss/fetch` - Fetch RSS feeds
 
 ## Integrated News Sources
