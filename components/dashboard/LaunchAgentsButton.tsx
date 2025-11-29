@@ -40,7 +40,7 @@ export function LaunchAgentsButton() {
       shadow-sm hover:shadow 
     `}
   >
-    {isLaunching ? (
+    {isLaunching ? ( 
       <>
         <Loader2 className="h-4 w-4 animate-spin" />
         Launching...

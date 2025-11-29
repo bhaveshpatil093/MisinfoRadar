@@ -92,9 +92,9 @@ Make it factual, concise, and shareable.`
       }
       
       const response = await openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: process.env.OPENAI_MODEL_NAME || 'gpt-4-turbo-preview',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.7,
+        temperature: parseFloat(process.env.COUNTER_AGENT_TEMPERATURE || '0.7'),
         response_format: { type: 'json_object' }
       })
       

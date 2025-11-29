@@ -115,9 +115,13 @@ export class TracerAgent {
                       (tweet.public_metrics?.reply_count || 0)
         }, 0)
 
-        if (totalEngagement > 1000) {
+        const viralThreshold = parseInt(process.env.VIRAL_ENGAGEMENT_THRESHOLD || '1000')
+        const botThreshold = parseInt(process.env.BOT_AMPLIFICATION_THRESHOLD || '20')
+        const botEngagementRatio = parseFloat(process.env.BOT_ENGAGEMENT_RATIO || '10')
+
+        if (totalEngagement > viralThreshold) {
           results.spreadPattern = 'viral'
-        } else if (twitterResults.length > 20 && totalEngagement / twitterResults.length < 10) {
+        } else if (twitterResults.length > botThreshold && totalEngagement / twitterResults.length < botEngagementRatio) {
           results.spreadPattern = 'bot_amplified'
         }
 
@@ -131,8 +135,9 @@ export class TracerAgent {
 
       // 2. Search YouTube for related videos
       const searchQuery = `${content.title} election`
+      const youtubeLimit = parseInt(process.env.YOUTUBE_SEARCH_LIMIT || '5')
       const youtubeResults = this.youtubeClient
-        ? await this.youtubeClient.searchVideos(searchQuery, 5)
+        ? await this.youtubeClient.searchVideos(searchQuery, youtubeLimit)
         : []
       
       if (youtubeResults.length > 0) {
@@ -152,7 +157,10 @@ export class TracerAgent {
               const likeCount = parseInt(videoDetails.statistics?.likeCount || '0')
               const engagementRatio = viewCount > 0 ? likeCount / viewCount : 0
               
-              if (engagementRatio < 0.01 && viewCount > 10000) {
+              const deepfakeEngagementThreshold = parseFloat(process.env.DEEPFAKE_ENGAGEMENT_THRESHOLD || '0.01')
+              const deepfakeViewThreshold = parseInt(process.env.DEEPFAKE_VIEW_THRESHOLD || '10000')
+              
+              if (engagementRatio < deepfakeEngagementThreshold && viewCount > deepfakeViewThreshold) {
                 results.isDeepfake = true
                 results.deepfakeConfidence = 0.6
                 results.manipulationType = 'suspicious_engagement_pattern'
@@ -166,9 +174,11 @@ export class TracerAgent {
       const keywords = content.keywords || []
       if (keywords.length > 0 && this.twitterClient) {
         const keywordQuery = keywords.slice(0, 3).join(' ')
-        const relatedTweets = await this.twitterClient.searchTweets(keywordQuery, 10)
+        const twitterLimit = parseInt(process.env.TWITTER_SEARCH_LIMIT || '10')
+        const relatedTweets = await this.twitterClient.searchTweets(keywordQuery, twitterLimit)
         
-        if (relatedTweets.length > 5) {
+        const coordinatedThreshold = parseInt(process.env.COORDINATED_TWEET_THRESHOLD || '5')
+        if (relatedTweets.length > coordinatedThreshold) {
           results.spreadPattern = 'coordinated'
         }
       }
@@ -178,8 +188,10 @@ export class TracerAgent {
       let worldwideTrends: any[] = []
       
       if (this.twitterClient) {
-        indiaTrends = await this.twitterClient.getTrendingTopics(23424848) // India WOEID
-        worldwideTrends = await this.twitterClient.getTrendingTopics(1)
+        const indiaWOEID = parseInt(process.env.TWITTER_INDIA_WOEID || '23424848')
+        const worldwideWOEID = parseInt(process.env.TWITTER_WORLDWIDE_WOEID || '1')
+        indiaTrends = await this.twitterClient.getTrendingTopics(indiaWOEID)
+        worldwideTrends = await this.twitterClient.getTrendingTopics(worldwideWOEID)
       }
       
       const contentKeywords = content.title.toLowerCase().split(' ')
@@ -189,7 +201,7 @@ export class TracerAgent {
 
       if (isTrending) {
         results.geographicSpread.push({
-          region: 'India',
+          region: process.env.DEFAULT_COUNTRY || 'India',
           isTrending: true,
         })
       }

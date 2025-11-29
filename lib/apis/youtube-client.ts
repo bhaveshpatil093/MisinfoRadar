@@ -4,10 +4,17 @@ export class YouTubeClient {
   private apiKey: string
 
   constructor() {
-    this.apiKey = process.env.YOUTUBE_API_KEY || 'AIzaSyBrQTNs0AUFTH5eGP93m41cHjNfDXA5yWA'
+    this.apiKey = process.env.YOUTUBE_API_KEY || ''
+    if (!this.apiKey) {
+      console.warn('YOUTUBE_API_KEY not configured. YouTube features will be disabled.')
+    }
   }
 
-  async searchVideos(query: string, maxResults: number = 10) {
+  async searchVideos(query: string, maxResults: number = parseInt(process.env.YOUTUBE_SEARCH_LIMIT || '10')) {
+    if (!this.apiKey) {
+      console.warn('YouTube API key not configured')
+      return []
+    }
     try {
       const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
         params: {
@@ -28,6 +35,10 @@ export class YouTubeClient {
   }
 
   async getVideoDetails(videoId: string) {
+    if (!this.apiKey) {
+      return null
+    }
+
     try {
       const response = await axios.get('https://www.googleapis.com/youtube/v3/videos', {
         params: {
@@ -44,11 +55,14 @@ export class YouTubeClient {
     }
   }
 
-  async searchByKeyword(keyword: string, maxResults: number = 10) {
+  async searchByKeyword(keyword: string, maxResults: number = parseInt(process.env.YOUTUBE_SEARCH_LIMIT || '10')) {
     return this.searchVideos(keyword, maxResults)
   }
 
-  async getChannelVideos(channelId: string, maxResults: number = 10) {
+  async getChannelVideos(channelId: string, maxResults: number = parseInt(process.env.YOUTUBE_SEARCH_LIMIT || '10')) {
+    if (!this.apiKey) {
+      return []
+    }
     try {
       const response = await axios.get('https://www.googleapis.com/youtube/v3/search', {
         params: {
