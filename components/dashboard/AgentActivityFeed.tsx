@@ -9,8 +9,6 @@ import { Bot, CheckCircle, AlertCircle, Search, Shield, Megaphone } from 'lucide
 import { formatDistanceToNow } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { AgentLog } from '@/lib/supabase/types'
-import { sampleAgentLogs } from '@/lib/sample-data'
-
 const agentIcons = {
   monitor: Search,
   detector: AlertCircle,
@@ -34,16 +32,19 @@ export function AgentActivityFeed() {
     try {
       return createClient()
     } catch (error) {
+      console.error('Failed to initialize Supabase client:', error)
       return undefined
     }
   }, [])
-  const isSampleMode = !supabase
-  const [logs, setLogs] = useState<AgentLog[]>(() =>
-    isSampleMode ? (sampleAgentLogs as AgentLog[]) : []
-  )
+  
+  const [logs, setLogs] = useState<AgentLog[]>([])
+  const [loading, setLoading] = useState(true)
   
   useEffect(() => {
-    if (!supabase) return
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
     
     loadLogs()
     
@@ -56,23 +57,43 @@ export function AgentActivityFeed() {
           setLogs(prev => [payload.new as AgentLog, ...prev].slice(0, 50))
         }
       )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'agent_logs' },
+        () => loadLogs()
+      )
       .subscribe()
     
+    // Refresh every 30 seconds
+    const interval = setInterval(loadLogs, 30000)
+    
     return () => {
+      clearInterval(interval)
       supabase.removeChannel(channel)
     }
-    // eslint-disable-next-line react-hooks/exduceps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase])
   
   async function loadLogs() {
     if (!supabase) return
-    const { data } = await supabase
-      .from('agent_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50)
     
-    if (data) setLogs(data)
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('agent_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      
+      if (error) {
+        console.error('Error loading agent logs:', error)
+      } else if (data) {
+        setLogs(data)
+      }
+    } catch (error) {
+      console.error('Error loading agent logs:', error)
+    } finally {
+      setLoading(false)
+    }
   }
   
   return (
@@ -85,9 +106,13 @@ export function AgentActivityFeed() {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[500px] pr-4">
-          {logs.length === 0 ? (
+          {loading ? (
             <div className="text-center text-muted-foreground py-8">
-              No agent activity yet
+              Loading agent activity...
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              No agent activity yet. Start the agents to see activity here.
             </div>
           ) : (
             <AnimatePresence mode="popLayout">

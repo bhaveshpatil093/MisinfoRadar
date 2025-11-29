@@ -1,39 +1,46 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Activity, Radio, Wifi, Clock3 } from 'lucide-react'
+import { Activity, Radio, Wifi } from 'lucide-react'
+import { DynamicLiveStreams } from '@/components/dashboard/DynamicLiveStreams'
+import { DynamicSensors } from '@/components/dashboard/DynamicSensors'
+import { DynamicTimeline } from '@/components/dashboard/DynamicTimeline'
+import { useMemo, useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import { formatDistanceToNow } from 'date-fns'
 
 export default function LivePage() {
-  const streams = [
-    {
-      label: 'Telegram Sensors',
-      status: 'Stabilizing',
-      incidents: 12,
-      latency: '1.2s',
-      notes: 'Aurangabad + Kolhapur forward clusters',
-    },
-    {
-      label: 'Twitter/X Firehose',
-      status: 'Boosted',
-      incidents: 28,
-      latency: '0.6s',
-      notes: '#VoteMumbai + #PuneResults trending',
-    },
-    {
-      label: 'YouTube Monitor',
-      status: 'Normal',
-      incidents: 7,
-      latency: '2.1s',
-      notes: 'Deepfake audio hunts in Satara',
-    },
-  ]
-
-  const sensors = [
-    { name: 'N8N RSS Worker', state: 'Synced 2m ago', severity: 'normal' },
-    { name: 'Supabase Realtime', state: 'Stable', severity: 'normal' },
-    { name: 'Detector Agent', state: 'High load', severity: 'warning' },
-    { name: 'Tracer Agent', state: 'Tracking 62 threads', severity: 'normal' },
-    { name: 'Verifier Agent', state: 'Fact-check backlog 4 items', severity: 'warning' },
-  ]
+  const supabase = useMemo(() => {
+    try {
+      return createClient()
+    } catch (error) {
+      return undefined
+    }
+  }, [])
+  
+  const [lastRun, setLastRun] = useState<string>('')
+  
+  useEffect(() => {
+    if (!supabase) return
+    
+    const loadLastRun = async () => {
+      const { data } = await supabase
+        .from('agent_logs')
+        .select('created_at')
+        .eq('agent_name', 'monitor')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      
+      if (data) {
+        setLastRun(` · last run ${formatDistanceToNow(new Date(data.created_at), { addSuffix: true })}`)
+      }
+    }
+    
+    loadLastRun()
+    const interval = setInterval(loadLastRun, 60000)
+    return () => clearInterval(interval)
+  }, [supabase])
 
   return (
     <div className="space-y-10">
@@ -44,24 +51,8 @@ export default function LivePage() {
           Every 300 seconds the Monitor Agent scrapes 24 feeds, while Detector & Tracer inspect
           Maharashtra-specific narratives in near-real time.
         </p>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          {streams.map((stream) => (
-            <Card key={stream.label} className="glass-panel border-white/5 bg-white/5">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between text-white">
-                  {stream.label}
-                  <Badge variant="outline" className="border-white/20 text-xs text-white">
-                    {stream.status}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm text-slate-300">
-                <p>Incidents: {stream.incidents}</p>
-                <p>Latency: {stream.latency}</p>
-                <p className="text-xs text-slate-400">{stream.notes}</p>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="mt-6">
+          <DynamicLiveStreams />
         </div>
       </div>
 
@@ -73,27 +64,8 @@ export default function LivePage() {
               Sensor Telemetry
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {sensors.map((sensor) => (
-              <div
-                key={sensor.name}
-                className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200"
-              >
-                <div>
-                  <p className="font-medium text-white">{sensor.name}</p>
-                  <p className="text-xs text-slate-400">{sensor.state}</p>
-                </div>
-                <Badge
-                  className={`${
-                    sensor.severity === 'warning'
-                      ? 'bg-orange-500/20 text-orange-200'
-                      : 'bg-green-500/20 text-green-200'
-                  } border-none text-xs`}
-                >
-                  {sensor.severity}
-                </Badge>
-              </div>
-            ))}
+          <CardContent>
+            <DynamicSensors />
           </CardContent>
         </Card>
 
@@ -108,7 +80,9 @@ export default function LivePage() {
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Webhooks</p>
               <p className="mt-2 text-white">n8n → /api/agents/monitor</p>
-              <p className="text-xs text-slate-400">Every 5 minutes · last run 2m ago</p>
+              <p className="text-xs text-slate-400">
+                Every {parseInt(process.env.NEXT_PUBLIC_MONITOR_SCAN_INTERVAL_MS || '300000') / 60000} minutes{lastRun}
+              </p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-slate-400">Supabase Live Query</p>
@@ -128,31 +102,7 @@ export default function LivePage() {
         </Card>
       </div>
 
-      <Card className="glass-panel border-white/10 bg-white/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-white">
-            <Clock3 className="h-4 w-4 text-emerald-300" />
-            Last 15-Minute Timeline
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3 text-sm text-slate-200">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">00:03 ago</p>
-            <p className="mt-2 text-white">Detector flagged deepfake audio clip (Satara).</p>
-            <p className="text-xs text-slate-400">Confidence 0.82 · escalated to Verifier</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">00:06 ago</p>
-            <p className="mt-2 text-white">Tracer mapped bot cluster boosting #PuneResults.</p>
-            <p className="text-xs text-slate-400">62 suspect accounts</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">00:11 ago</p>
-            <p className="mt-2 text-white">Counter Agent shipped WhatsApp correction for Kolhapur.</p>
-            <p className="text-xs text-slate-400">Reach 180k · Engagement 27%</p>
-          </div>
-        </CardContent>
-      </Card>
+      <DynamicTimeline />
     </div>
   )
 }

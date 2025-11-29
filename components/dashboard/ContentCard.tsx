@@ -9,23 +9,24 @@ import { ExternalLink } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion } from 'framer-motion'
 import type { ContentItem } from '@/lib/supabase/types'
-import { sampleContentItems } from '@/lib/sample-data'
-
 export function ContentCard() {
   const supabase = useMemo(() => {
     try {
       return createClient()
     } catch (error) {
+      console.error('Failed to initialize Supabase client:', error)
       return undefined
     }
   }, [])
-  const isSampleMode = !supabase
-  const [contentItems, setContentItems] = useState<ContentItem[]>(() =>
-    isSampleMode ? (sampleContentItems as unknown as ContentItem[]) : []
-  )
+  
+  const [contentItems, setContentItems] = useState<ContentItem[]>([])
+  const [loading, setLoading] = useState(true)
   
   useEffect(() => {
-    if (!supabase) return
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
     
     loadContent()
     
@@ -38,21 +39,37 @@ export function ContentCard() {
       )
       .subscribe()
     
+    // Refresh every 30 seconds
+    const interval = setInterval(loadContent, 30000)
+    
     return () => {
+      clearInterval(interval)
       supabase.removeChannel(channel)
     }
-    // eslint-disable-next-line react-hooks-exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase])
   
   async function loadContent() {
     if (!supabase) return
-    const { data } = await supabase
-      .from('content_items')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(20)
     
-    if (data) setContentItems(data)
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('content_items')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      
+      if (error) {
+        console.error('Error loading content items:', error)
+      } else if (data) {
+        setContentItems(data)
+      }
+    } catch (error) {
+      console.error('Error loading content items:', error)
+    } finally {
+      setLoading(false)
+    }
   }
   
   const getStatusColor = (status: string) => {
@@ -82,9 +99,13 @@ export function ContentCard() {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[600px]">
-          {contentItems.length === 0 ? (
+          {loading ? (
             <div className="text-center text-muted-foreground py-8">
-              No content items yet
+              Loading content...
+            </div>
+          ) : contentItems.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              No content items yet. Run the Monitor Agent to start scanning RSS feeds.
             </div>
           ) : (
             <div className="space-y-4">

@@ -101,10 +101,10 @@ Respond with only "YES" or "NO".`
     
     try {
       const response = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
+        model: process.env.GROQ_MODEL_NAME || 'llama-3.3-70b-versatile',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.1,
-        max_tokens: 10
+        temperature: parseFloat(process.env.GROQ_TEMPERATURE || '0.1'),
+        max_tokens: parseInt(process.env.GROQ_MAX_TOKENS || '10')
       })
       
       const answer = response.choices[0].message.content?.trim().toUpperCase()
@@ -166,7 +166,7 @@ Be objective and evidence-based.`
       }
       
       const response = await openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: process.env.OPENAI_MODEL_NAME || 'gpt-4-turbo-preview',
         messages: [
           {
             role: 'system',
@@ -174,7 +174,7 @@ Be objective and evidence-based.`
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.3,
+        temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.3'),
         response_format: { type: 'json_object' }
       })
       

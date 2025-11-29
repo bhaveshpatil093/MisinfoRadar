@@ -9,8 +9,6 @@ import { AlertTriangle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { motion } from 'framer-motion'
 import type { Alert } from '@/lib/supabase/types'
-import { sampleAlerts } from '@/lib/sample-data'
-
 const severityColors = {
   low: 'bg-yellow-100 text-yellow-700 border-yellow-300',
   medium: 'bg-orange-100 text-orange-700 border-orange-300',
@@ -23,16 +21,19 @@ export function AlertCard() {
     try {
       return createClient()
     } catch (error) {
+      console.error('Failed to initialize Supabase client:', error)
       return undefined
     }
   }, [])
-  const isSampleMode = !supabase
-  const [alerts, setAlerts] = useState<Alert[]>(() =>
-    isSampleMode ? (sampleAlerts as Alert[]) : []
-  )
+  
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [loading, setLoading] = useState(true)
   
   useEffect(() => {
-    if (!supabase) return
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
     
     loadAlerts()
     
@@ -45,7 +46,11 @@ export function AlertCard() {
       )
       .subscribe()
     
+    // Refresh every 30 seconds
+    const interval = setInterval(loadAlerts, 30000)
+    
     return () => {
+      clearInterval(interval)
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -53,14 +58,26 @@ export function AlertCard() {
   
   async function loadAlerts() {
     if (!supabase) return
-    const { data } = await supabase
-      .from('alerts')
-      .select('*')
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(10)
     
-    if (data) setAlerts(data)
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('alerts')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(20)
+      
+      if (error) {
+        console.error('Error loading alerts:', error)
+      } else if (data) {
+        setAlerts(data)
+      }
+    } catch (error) {
+      console.error('Error loading alerts:', error)
+    } finally {
+      setLoading(false)
+    }
   }
   
   return (
@@ -73,9 +90,13 @@ export function AlertCard() {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[500px]">
-          {alerts.length === 0 ? (
+          {loading ? (
             <div className="text-center text-muted-foreground py-8">
-              No active alerts
+              Loading alerts...
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="text-center text-muted-foreground py-8">
+              No active alerts. Alerts will appear here when misinformation is detected.
             </div>
           ) : (
             <div className="space-y-3">

@@ -10,7 +10,6 @@ export class VerifierAgent {
     const startTime = Date.now()
     
     try {
-      // Get content with misinformation flag
       const { data: content } = await this.supabase
         .from('content_items')
         .select('*')
@@ -20,12 +19,12 @@ export class VerifierAgent {
       
       if (!content) return
       
-      // Extract claims
+      
       const claims = await this.extractClaims(content)
       
       if (claims.length === 0) return
       
-      // Verify each claim
+      
       for (const claim of claims) {
         const verification = await this.verifyClaim(claim)
         
@@ -81,9 +80,9 @@ Maximum 5 claims.`
       }
       
       const response = await openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: process.env.OPENAI_MODEL_NAME || 'gpt-4-turbo-preview',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
+        temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.2'),
         response_format: { type: 'json_object' }
       })
       
@@ -134,9 +133,9 @@ Provide verification in JSON format:
       }
       
       const response = await openai.chat.completions.create({
-        model: 'gpt-4-turbo-preview',
+        model: process.env.OPENAI_MODEL_NAME || 'gpt-4-turbo-preview',
         messages: [{ role: 'user', content: prompt }],
-        temperature: 0.2,
+        temperature: parseFloat(process.env.OPENAI_TEMPERATURE || '0.2'),
         response_format: { type: 'json_object' }
       })
       

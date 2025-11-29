@@ -9,15 +9,17 @@ export class MonitorAgent {
     this.isRunning = true
     console.log('🔍 Monitor Agent: Started')
     
+    const scanInterval = parseInt(process.env.MONITOR_SCAN_INTERVAL_MS || '300000') // Default 5 minutes
+    
     while (this.isRunning) {
       await this.scan()
-      // Wait 5 minutes before next scan
-      await this.sleep(5 * 60 * 1000)
+      await this.sleep(scanInterval)
     }
   }
   
   async scan() {
     const startTime = Date.now()
+    const batchSize = parseInt(process.env.MONITOR_BATCH_SIZE || '50')
     
     try {
       // Log agent activity
@@ -32,7 +34,7 @@ export class MonitorAgent {
         .select('*')
         .eq('scan_status', 'pending')
         .order('published_at', { ascending: false })
-        .limit(50)
+        .limit(batchSize)
       
       const processingTime = Date.now() - startTime
       

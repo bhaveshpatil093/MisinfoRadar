@@ -5,30 +5,31 @@ import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Activity, AlertTriangle, CheckCircle, Eye } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { sampleMetrics } from '@/lib/sample-data'
 
 export function LiveMetrics() {
   const supabase = useMemo(() => {
     try {
       return createClient()
     } catch (error) {
+      console.error('Failed to initialize Supabase client:', error)
       return undefined
     }
   }, [])
-  const isSampleMode = !supabase
-  const [metrics, setMetrics] = useState(() =>
-    isSampleMode
-      ? sampleMetrics
-      : {
-          scannedToday: 0,
-          misinfoDetected: 0,
-          activeAlerts: 0,
-          verificationRate: 0,
-        }
-  )
+  
+  const [metrics, setMetrics] = useState({
+    scannedToday: 0,
+    misinfoDetected: 0,
+    activeAlerts: 0,
+    verificationRate: 0,
+  })
+  
+  const [loading, setLoading] = useState(true)
   
   useEffect(() => {
-    if (!supabase) return
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
     
     loadMetrics()
     
@@ -39,9 +40,17 @@ export function LiveMetrics() {
         { event: '*', schema: 'public', table: 'content_items' },
         () => loadMetrics()
       )
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'alerts' },
+        () => loadMetrics()
+      )
       .subscribe()
     
+    // Refresh every 30 seconds
+    const interval = setInterval(loadMetrics, 30000)
+    
     return () => {
+      clearInterval(interval)
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -49,33 +58,83 @@ export function LiveMetrics() {
   
   async function loadMetrics() {
     if (!supabase) return
-    const today = new Date().toISOString().split('T')[0]
     
-    // Get today's scanned items
-    const { count: scanned } = await supabase
-      .from('content_items')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', today)
-    
-    // Get today's misinformation
-    const { count: misinfo } = await supabase
-      .from('content_items')
-      .select('*', { count: 'exact', head: true })
-      .eq('is_misinformation', true)
-      .gte('created_at', today)
-    
-    // Get active alerts
-    const { count: alerts } = await supabase
-      .from('alerts')
-      .select('*', { count: 'exact', head: true })
-      .eq('status', 'active')
-    
-    setMetrics({
-      scannedToday: scanned || 0,
-      misinfoDetected: misinfo || 0,
-      activeAlerts: alerts || 0,
-      verificationRate: scanned ? ((scanned - (misinfo || 0)) / scanned * 100) : 0,
-    })
+    try {
+      setLoading(true)
+      
+      // Get start of today in UTC
+      const now = new Date()
+      const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+      const todayISO = today.toISOString()
+      
+      // Get all content items (for better visibility when database is new)
+      const { count: totalItems, error: totalError } = await supabase
+        .from('content_items')
+        .select('*', { count: 'exact', head: true })
+      
+      // Get today's scanned items (items with scan_status = completed and scanned today)
+      const { count: scannedToday, error: scannedError } = await supabase
+        .from('content_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('scan_status', 'completed')
+        .gte('scanned_at', todayISO)
+      
+      // Fallback: if no items scanned today, show all completed items
+      const scannedCount = scannedToday || 0
+      const scannedToUse = scannedCount > 0 ? scannedCount : (totalItems || 0)
+      
+      if (scannedError) {
+        console.error('Error fetching scanned items:', scannedError)
+      }
+      
+      // Get all-time misinformation count
+      const { count: misinfoAll, error: misinfoAllError } = await supabase
+        .from('content_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_misinformation', true)
+      
+      if (misinfoAllError) {
+        console.error('Error fetching misinformation count:', misinfoAllError)
+      }
+      
+      // Get today's misinformation
+      const { count: misinfoToday, error: misinfoTodayError } = await supabase
+        .from('content_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_misinformation', true)
+        .gte('created_at', todayISO)
+      
+      if (misinfoTodayError) {
+        console.error('Error fetching today misinformation:', misinfoTodayError)
+      }
+      
+      // Get active alerts
+      const { count: alerts, error: alertsError } = await supabase
+        .from('alerts')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+      
+      if (alertsError) {
+        console.error('Error fetching alerts:', alertsError)
+      }
+      
+      // Calculate verification rate: (total scanned - misinformation) / total scanned
+      const totalScanned = scannedToUse
+      const totalMisinfo = misinfoAll || 0
+      const verifiedCount = totalScanned > 0 ? totalScanned - totalMisinfo : 0
+      const verificationRate = totalScanned > 0 ? (verifiedCount / totalScanned) * 100 : 0
+      
+      setMetrics({
+        scannedToday: scannedToUse,
+        misinfoDetected: misinfoToday || misinfoAll || 0, // Show today's if available, else all-time
+        activeAlerts: alerts || 0,
+        verificationRate: verificationRate,
+      })
+    } catch (error) {
+      console.error('Error loading metrics:', error)
+    } finally {
+      setLoading(false)
+    }
   }
   
   const metricCards = [
@@ -129,7 +188,7 @@ export function LiveMetrics() {
             </CardHeader>
             <CardContent>
               <div className={`text-3xl font-bold tracking-tight ${metric.color}`}>
-                {metric.value}
+                {loading ? '...' : metric.value}
               </div>
             </CardContent>
           </Card>
